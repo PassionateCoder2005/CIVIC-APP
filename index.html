@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Civic Issue Reporter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Maps API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-6">
+  <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-4 text-center">📝 Report an Issue</h1>
+
+    <label class="block mb-2 font-semibold">Category</label>
+    <select id="category" class="w-full border rounded-lg p-2 mb-4">
+      <option value="Pothole">Pothole</option>
+      <option value="Streetlight">Streetlight</option>
+      <option value="Garbage">Garbage</option>
+    </select>
+
+    <label class="block mb-2 font-semibold">Description</label>
+    <textarea id="desc" class="w-full border rounded-lg p-2 mb-4" placeholder="Describe the issue"></textarea>
+
+    <label class="block mb-2 font-semibold">Upload Photo</label>
+    <input type="file" id="photo" accept="image/*" class="mb-4">
+
+    <h2 class="text-lg font-bold mb-2">📍 Select Location</h2>
+    <div id="map" class="w-full h-64 border rounded-lg mb-4"></div>
+    <p id="location" class="mb-4 text-gray-700">Location: Not Selected</p>
+
+    <button onclick="submitReport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg">
+      Submit Report
+    </button>
+  </div>
+
+  <script>
+    let userLat = null, userLng = null;
+    let map, marker;
+
+    // Initialize map
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 28.6139, lng: 77.2090 }, // Default: Delhi
+        zoom: 12,
+      });
+
+      // Click to place marker
+      map.addListener("click", (e) => {
+        setMarker(e.latLng);
+      });
+    }
+
+
+    // Submit report
+    function submitReport() {
+      let category = document.getElementById("category").value;
+      let desc = document.getElementById("desc").value;
+      let photoFile = document.getElementById("photo").files[0];
+
+      if (!photoFile) {
+        alert("Please select a photo");
+        return;
+      }
+      if (!userLat || !userLng) {
+        alert("Please select location on map");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        let reports = JSON.parse(localStorage.getItem("reports") || "[]");
+        reports.push({
+          category,
+          desc,
+          photo: e.target.result, 
+          lat: userLat,
+          lng: userLng,
+          status: "Pending"
+        });
+        localStorage.setItem("reports", JSON.stringify(reports));
+        alert("✅ Report Submitted Successfully!");
+
+        // Clear form
+        document.getElementById("category").value = "";
+        document.getElementById("desc").value = "";
+        document.getElementById("photo").value = "";
+        document.getElementById("location").innerText = "Location: Not Selected";
+        if (marker) {
+          marker.setMap(null);
+          marker = null;
+        }
+      };
+      reader.readAsDataURL(photoFile);
+    }
+
+    window.onload = initMap;
+  </script>
+</body>
+</html>
